@@ -1,6 +1,7 @@
-# excel-verzeichnis-generator
+# excel-verzeichnis-generator :file_folder:
 
 Mit diesem tool kann man Verzeichnisse & Unterverzeichnisse anhand von werten aus einer Excel Spalte generieren.
+Funktioniert auf Windows & Linux :penguin:
 
 Die executables wurden mit PyInstaller erstellt:
 
