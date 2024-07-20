@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verzeichnis Generator</title>
+    <script type="text/javascript" src="/eel.js"></script>
+    <link rel="stylesheet" href="reset.css" />
+    <style>
+      :root {
+        --primary-color: #333;
+        --secondary-color: #f9f9f9;
+        --text-color: #333;
+        --border-color: #ddd;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        color: var(--text-color);
+      }
+
+      h1 {
+        text-align: center;
+        color: var(--primary-color);
+        margin-bottom: 30px;
+      }
+
+      .container {
+        background-color: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      input[type="file"],
+      input[type="number"],
+      input[type="text"] {
+        flex-grow: 1;
+        margin-right: 10px;
+        padding: 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 14px;
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+
+      button {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s;
+        width: 140px;
+        height: 40px;
+      }
+
+      .custom-file-upload {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s;
+        width: 140px;
+        height: 39px;
+        font-weight: normal;
+      }
+
+      button:hover,
+      .custom-file-upload:hover {
+        background-color: #dd2e44;
+      }
+
+      .subdirs {
+        background-color: var(--secondary-color);
+        padding: 20px;
+        border-radius: 4px;
+        margin-top: 20px;
+      }
+
+      #subdirList {
+        list-style-type: none;
+        padding: 0;
+        margin-bottom: 15px;
+      }
+
+      #subdirList li {
+        background-color: white;
+        margin-bottom: 5px;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .remove-btn {
+        background-color: #e74c3c;
+        padding: 5px 10px;
+        font-size: 12px;
+      }
+
+      .remove-btn:hover {
+        background-color: #c0392b;
+      }
+
+      .create-btn {
+        display: block;
+        width: 100%;
+        margin-top: 20px;
+        font-size: 16px;
+        font-weight: bold;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div>
+        <h1 id="welcomeMessage">Verzeichnis Generator</h1>
+      </div>
+      <div class="form-group">
+        <label>Excel Datei:</label>
+
+        <div style="display: flex">
+          <!-- Todo put value of excel path into this field. -->
+          <input type="text" id="excelFilePath" readonly />
+          <button onclick="document.getElementById('excelFile').click()">
+            Durchsuchen
+          </button>
+          <label for="excelFile" class="hidden"> </label>
+        </div>
+
+        <input type="file" id="excelFile" accept=".xlsx,.xls" />
+      </div>
+
+      <div class="form-group">
+        <label for="columnNumber">Spaltennummer:</label>
+        <input type="number" id="columnNumber" min="1" value="1" />
+      </div>
+
+      <div class="form-group">
+        <label for="outputDir">Ausgabeverzeichnis:</label>
+        <div style="display: flex">
+          <input type="text" id="outputDir" readonly />
+          <button onclick="browseOutputDir()">Durchsuchen</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Unterverzeichnisse:</label>
+        <ul id="subdirList"></ul>
+        <div style="display: flex">
+          <input
+            type="text"
+            id="newSubdir"
+            placeholder="Neues unterverzeichnis hinzufügen"
+          />
+          <button onclick="addSubdir()">Hinzufügen</button>
+        </div>
+      </div>
+
+      <button onclick="createDirectories()" class="create-btn">
+        Verzeichnisse erstellen
+      </button>
+    </div>
+    <div style="display: flex; justify-content: flex-end">
+      <p>Mit Liebe für Marc ❤️</p>
+    </div>
+
+    <script>
+      // Load subdirectories on page load
+      eel.load_subdirs()().then(updateSubdirList);
+
+      document
+        .getElementById("excelFile")
+        .addEventListener("change", function (event) {
+          var fileName = event.target.files[0].name;
+          document.getElementById("excelFilePath").value = fileName;
+        });
+
+      function updateSubdirList(subdirs) {
+        const list = document.getElementById("subdirList");
+        list.innerHTML = "";
+        subdirs.forEach((subdir) => {
+          const li = document.createElement("li");
+          li.textContent = subdir;
+          const removeBtn = document.createElement("button");
+          removeBtn.textContent = "Löschen";
+          removeBtn.onclick = () => removeSubdir(subdir);
+          li.appendChild(removeBtn);
+          list.appendChild(li);
+        });
+      }
+
+      function addSubdir() {
+        const newSubdir = document.getElementById("newSubdir").value;
+        eel.add_subdir(newSubdir)().then(updateSubdirList);
+        document.getElementById("newSubdir").value = "";
+      }
+
+      function removeSubdir(subdir) {
+        eel.remove_subdir(subdir)().then(updateSubdirList);
+      }
+
+      async function createDirectories() {
+        const excelFileInput = document.getElementById("excelFile");
+        const outputDir = document.getElementById("outputDir").value;
+        const columnNumber = document.getElementById("columnNumber").value;
+
+        if (!excelFileInput.files || excelFileInput.files.length === 0) {
+          alert("Please select an Excel file.");
+          return;
+        }
+
+        const excelFile = excelFileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = async function (event) {
+          const fileData = new Uint8Array(event.target.result);
+
+          try {
+            const result = await eel.create_directories(
+              Array.from(fileData),
+              excelFile.name,
+              outputDir,
+              columnNumber,
+            )();
+            if (result.success) {
+              alert(result.message);
+            } else {
+              alert("Error: " + result.message);
+            }
+          } catch (error) {
+            console.error("Error creating directories:", error);
+            alert("An error occurred while creating directories.");
+          }
+        };
+
+        reader.readAsArrayBuffer(excelFile);
+      }
+
+      async function browseOutputDir() {
+        try {
+          const result = await eel.select_folder()();
+          if (result) {
+            document.getElementById("outputDir").value = result;
+          }
+        } catch (error) {
+          console.error("Error selecting folder:", error);
+        }
+      }
+    </script>
+  </body>
+</html>
