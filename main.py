@@ -116,7 +116,7 @@ try:
     if chrome_path or chromium_path:
         eel.start('index.html', size=(300, 200))
     else:
-        eel.start('index.html', size=(300, 200), mode="edge")
+        eel.start('index.html', size=(300, 200), mode="default")
 except OSError as e:
     if "WinError 10048" in str(e):
         pass
